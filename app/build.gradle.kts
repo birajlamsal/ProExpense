@@ -1,6 +1,3 @@
-import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.getByName
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -107,12 +104,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     // KSP configuration
@@ -174,7 +167,9 @@ dependencies {
     //Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.remote.config)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.firestore)
 
     // Fragment Testing
     debugImplementation(libs.fragment.testing)

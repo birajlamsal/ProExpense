@@ -5,7 +5,6 @@ import androidx.paging.DataSource
 import com.arduia.expense.data.exception.RepositoryException
 import com.arduia.expense.data.ext.getResultSuccessOrError
 import com.arduia.expense.data.local.*
-import com.arduia.expense.data.network.ExpenseNetworkDao
 import com.arduia.expense.data.network.ExpenseVersionDto
 import com.arduia.expense.data.network.FeedbackDto
 import com.arduia.expense.model.ErrorResult

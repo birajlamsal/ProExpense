@@ -1,11 +1,12 @@
 package com.arduia.expense.data.network
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class ExpenseVersionDto(
     @SerializedName("version_code")
-    val version_code: Int,
+    val versionCode: Int,
 
     @SerializedName("version_name")
-    val version_name: String
-)
+    val versionName: String
+): Serializable

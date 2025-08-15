@@ -2,6 +2,7 @@ package com.arduia.expense.data.network
 
 import com.arduia.expense.data.local.AboutUpdateDataModel
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 class CheckUpdateDto {
 
@@ -22,5 +23,5 @@ class CheckUpdateDto {
 
         @SerializedName("info")
         val info: AboutUpdateDataModel? = null
-    )
+    ): Serializable
 }
