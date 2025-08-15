@@ -74,6 +74,7 @@ class MainActivity @Inject constructor(): AppCompatActivity(), NavigationDrawer,
         setTheme(R.style.Theme_ProExpense)
         binding = ActivityMainBinding.inflate(layoutInflater)
         headerBinding = LayoutHeaderBinding.bind(binding.nvMain.getHeaderView(0))
+        theme.applyStyle(R.style.OptOutEdgeToEdgeEnforcement, false)
         setContentView(binding.root)
         navController = findNavController()
         navOption = createNavOption()
