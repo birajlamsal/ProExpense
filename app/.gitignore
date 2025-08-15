@@ -2,3 +2,5 @@
 /release
 /src/dev/google-services.json
 /src/production/google-services.json
+/production/
+/dev/
