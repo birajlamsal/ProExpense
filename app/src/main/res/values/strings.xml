@@ -98,6 +98,7 @@
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
     <string name="about_update">About Update</string>
     <string name="install">Install</string>
     <string name="others">Others</string>

@@ -105,14 +105,6 @@ class AboutFragment : NavBaseFragment() {
         }
     }
 
-    private fun openAppStoreLink(){
-        val intent = Intent().apply {
-            val url = "https://play.google.com/store/apps/details?id=com.arduia.expense"
-            action = Intent.ACTION_VIEW
-            data = Uri.parse(url)
-        }
-        startActivity(intent)
-    }
 
     private fun showAboutDeveloper() {
         val devString = getString(R.string.developer)
@@ -169,7 +161,7 @@ class AboutFragment : NavBaseFragment() {
         aboutUpdateDialog?.dismiss()
         aboutUpdateDialog = AboutUpdateDialog(requireContext()).apply {
             setOnInstallClickListener {
-                openAppStoreLink()
+                VersionUpdateUtil.openAppStoreLink(requireContext())
             }
         }
         aboutUpdateDialog?.show(data)

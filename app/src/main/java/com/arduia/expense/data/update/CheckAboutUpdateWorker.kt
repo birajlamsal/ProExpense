@@ -12,10 +12,8 @@ import com.arduia.expense.data.network.CheckUpdateDto
 import com.arduia.expense.model.getDataOrError
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.lang.Exception
-import javax.inject.Inject
 
 @HiltWorker
 class CheckAboutUpdateWorker @AssistedInject constructor(
@@ -39,7 +37,7 @@ class CheckAboutUpdateWorker @AssistedInject constructor(
 
                 Timber.d("isShouldUpdate true")
                 val updateStatusLevel =
-                    if (status.isCriticalUpdate) UpdateStatusDataModel.STATUS_CRITICAL_UPDATE
+                    if (status.isCriticalUpdate) UpdateStatusDataModel.STATUS_FORCE_UPGRADE
                     else UpdateStatusDataModel.STATUS_NORMAL_UPDATE
 
                 val info = status.info
