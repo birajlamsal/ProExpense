@@ -1,6 +1,7 @@
 package com.arduia.expense.data.local
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class AboutUpdateDataModel(
     @SerializedName("name")
@@ -11,4 +12,4 @@ data class AboutUpdateDataModel(
 
     @SerializedName("change_logs")
     val changeLogs: String
-)
+): Serializable

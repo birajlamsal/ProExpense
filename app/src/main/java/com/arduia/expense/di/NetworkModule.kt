@@ -1,7 +1,9 @@
 package com.arduia.expense.di
 
 import com.arduia.expense.BuildConfig
-import com.arduia.expense.data.network.ExpenseNetworkDao
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +26,15 @@ object NetworkModule{
 
     @Provides
     @Singleton
-    fun provideNetworkDao(retrofit: Retrofit): ExpenseNetworkDao =
-        retrofit.create(ExpenseNetworkDao::class.java)
+    fun provideFireStore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideRemoteConfig(): FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance().apply {
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(60)
+            .build()
+         setConfigSettingsAsync(configSettings)
+    }
 
 }
