@@ -28,7 +28,7 @@ class ProExpenseServerRepositoryImpl @Inject constructor(
     }
 
     init {
-        remoteConfig.fetchAndActivate().addOnCompleteListener {}
+        remoteConfig.fetchAndActivate()
     }
 
     override fun postFeedback(comment: FeedbackDto.Request): FlowResult<FeedbackDto.Response> =
@@ -62,6 +62,7 @@ class ProExpenseServerRepositoryImpl @Inject constructor(
             val minVersion = remoteConfig.getLong("min_version")
             val criticalVersion = remoteConfig.getLong("critical_version")
             val newVersionModel = remoteConfig.getString("about_new_version_info")
+
             val versionInfo = Gson().fromJson(newVersionModel, AboutUpdateDataModel::class.java)
 
             if (deviceInfo.currentVersion <= minVersion) {

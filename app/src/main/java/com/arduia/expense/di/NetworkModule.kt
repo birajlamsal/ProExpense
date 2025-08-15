@@ -3,6 +3,7 @@ package com.arduia.expense.di
 import com.arduia.expense.BuildConfig
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,6 +30,11 @@ object NetworkModule{
 
     @Provides
     @Singleton
-    fun provideRemoteConfig(): FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
+    fun provideRemoteConfig(): FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance().apply {
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(60)
+            .build()
+         setConfigSettingsAsync(configSettings)
+    }
 
 }
