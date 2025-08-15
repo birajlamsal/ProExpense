@@ -98,6 +98,7 @@
     <string name="today">Heute</string>
     <string name="yesterday">Gestern</string>
     <string name="cancel">Abbrechen</string>
+    <string name="close">Schließen</string>
     <string name="about_update">Über das Update</string>
     <string name="install">Installieren</string>
     <string name="others">Anderes</string>

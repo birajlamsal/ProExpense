@@ -65,7 +65,7 @@ class SettingsViewModel @Inject constructor(
                         _isNewVersionAvailable post true
                     }
 
-                    UpdateStatusDataModel.STATUS_CRITICAL_UPDATE -> {
+                    UpdateStatusDataModel.STATUS_FORCE_UPGRADE -> {
                         _isNewVersionAvailable post true
                     }
                 }

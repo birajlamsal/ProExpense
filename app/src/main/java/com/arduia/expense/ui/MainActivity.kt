@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -23,7 +22,6 @@ import com.arduia.expense.di.IntegerDecimal
 import com.arduia.expense.di.TopDropNavOption
 import com.arduia.expense.model.getDataOrError
 import com.arduia.expense.ui.backup.BackupMessageViewModel
-import com.arduia.expense.ui.common.themeColor
 import com.arduia.mvvm.EventObserver
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -32,10 +30,13 @@ import java.text.DecimalFormat
 import java.util.*
 import javax.inject.Inject
 import androidx.core.content.ContextCompat
+import com.arduia.expense.ui.about.AboutUpdateUiModel
+import com.arduia.expense.ui.about.ForceUpgradeDialog
+import com.arduia.expense.ui.about.VersionUpdateUtil
 
 
 @AndroidEntryPoint
-class MainActivity @Inject constructor(): AppCompatActivity(), NavigationDrawer,
+class MainActivity @Inject constructor() : AppCompatActivity(), NavigationDrawer,
     MainHost, BackupMessageReceiver {
 
     private lateinit var binding: ActivityMainBinding
@@ -60,6 +61,8 @@ class MainActivity @Inject constructor(): AppCompatActivity(), NavigationDrawer,
 
     private val viewModel by viewModels<MainViewModel>()
 
+    private var aboutUpdateDialog: ForceUpgradeDialog? = null
+
     @Inject
     @IntegerDecimal
     lateinit var countFormat: DecimalFormat
@@ -82,10 +85,32 @@ class MainActivity @Inject constructor(): AppCompatActivity(), NavigationDrawer,
         setupViewModel()
     }
 
+
+    private fun showForceUpgrade(data: AboutUpdateUiModel) {
+        aboutUpdateDialog?.dismiss()
+        aboutUpdateDialog = ForceUpgradeDialog(this).apply {
+            setOnInstallClickListener {
+                VersionUpdateUtil.openAppStoreLink(this@MainActivity)
+                this@MainActivity.finish()
+            }
+            setOnCloseListener {
+                this@MainActivity.finish()
+            }
+        }
+        aboutUpdateDialog?.show(data)
+    }
+
     private fun setupViewModel() {
         backupViewModel.finishedEvent.observe(this, EventObserver {
             showBackupFinishedMessage(count = it)
         })
+
+        viewModel.forceUpgradeState.observe(this) { state ->
+            val (enabled, info) = state
+            if (enabled && info != null) {
+                showForceUpgrade(info)
+            }
+        }
     }
 
     private fun showBackupFinishedMessage(count: Int) {
@@ -232,6 +257,7 @@ class MainActivity @Inject constructor(): AppCompatActivity(), NavigationDrawer,
                     addFabShowTask?.invoke()
                 }
             }
+
             else -> {
                 addFabShowTask?.invoke()
             }
