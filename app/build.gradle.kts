@@ -34,8 +34,8 @@ android {
         applicationId = "com.arduia.expense"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 13
-        versionName = "1.0.0-beta07"
+        versionCode = 14
+        versionName = "1.0.0-beta08"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
