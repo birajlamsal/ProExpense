@@ -59,8 +59,8 @@ class ProExpenseServerRepositoryImpl @Inject constructor(
 
     override suspend fun getAboutUpdateSync(deviceInfo: CheckUpdateDto.Request): Result<CheckUpdateDto.Response> {
         return try {
-            val minVersion = remoteConfig.getLong("min_version")
-            val criticalVersion = remoteConfig.getLong("critical_version")
+            val minVersion = remoteConfig.getLong("minimum_version")
+            val criticalVersion = remoteConfig.getLong("force_upgrade_version")
             val newVersionModel = remoteConfig.getString("about_new_version_info")
 
             val versionInfo = Gson().fromJson(newVersionModel, AboutUpdateDataModel::class.java)
