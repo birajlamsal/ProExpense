@@ -102,6 +102,7 @@
     <string name="today">ယနေ့</string>
     <string name="yesterday">မနေ့က</string>
     <string name="cancel">ပယ်ဖျက်မည်</string>
+    <string name="close">ပိတ်မည်</string>
     <string name="about_update">ဗားးရှင်းအသစ်အကြောင်း</string>
     <string name="install">ထည့်သွင်းမည်</string>
     <string name="outcome">ထွက်ငွေ</string>

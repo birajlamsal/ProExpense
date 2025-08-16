@@ -7,7 +7,10 @@ plugins {
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.navigation.safe.args)
+    alias(libs.plugins.google.service.plugin)
+    alias(libs.plugins.firebase.analytics)
 }
 
 val apiProfile = rootProject.file("api.properties")
@@ -31,8 +34,8 @@ android {
         applicationId = "com.arduia.expense"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 13
-        versionName = "1.0.0-beta07"
+        versionCode = 14
+        versionName = "1.0.0-beta08"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
@@ -75,6 +78,20 @@ android {
             )
         }
     }
+    flavorDimensions += "environment"
+
+    productFlavors {
+
+        create("dev") {
+            dimension = "environment"
+            applicationId = "com.arduia.expense.dev"
+        }
+
+        create("production") {
+            dimension = "environment"
+            applicationId = "com.arduia.expense"
+        }
+    }
 
     buildFeatures {
         viewBinding = true
@@ -87,12 +104,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     // KSP configuration
@@ -150,6 +163,13 @@ dependencies {
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.androidx.test.ext)
     testImplementation(libs.espresso.core)
+
+    //Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.remote.config)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.firestore)
 
     // Fragment Testing
     debugImplementation(libs.fragment.testing)
