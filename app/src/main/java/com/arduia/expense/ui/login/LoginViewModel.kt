@@ -72,4 +72,12 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
+
+    suspend fun syncNow(): Result<Unit> {
+        return when (val result = syncRepository.syncTwoWay()) {
+            is Result.Success -> Result.Success(Unit)
+            is Result.Error -> Result.Error(result.exception)
+            Result.Loading -> Result.Loading
+        }
+    }
 }

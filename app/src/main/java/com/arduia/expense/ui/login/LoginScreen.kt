@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,8 +40,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.app.Activity
 import com.arduia.expense.R
+import android.widget.Toast
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel) {
@@ -57,6 +59,7 @@ fun LoginScreen(viewModel: LoginViewModel) {
         )
     )
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -75,12 +78,22 @@ fun LoginScreen(viewModel: LoginViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             IconButton(
-                onClick = { (context as? Activity)?.finish() },
+                onClick = {
+                    scope.launch {
+                        val result = viewModel.syncNow()
+                        val message = when (result) {
+                            is com.arduia.expense.model.Result.Success -> "Synced"
+                            is com.arduia.expense.model.Result.Error -> "Sync failed"
+                            com.arduia.expense.model.Result.Loading -> "Syncing..."
+                        }
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    }
+                },
                 modifier = Modifier.align(Alignment.Start)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_back),
-                    contentDescription = "Back",
+                    painter = painterResource(id = R.drawable.ic_loop),
+                    contentDescription = "Sync",
                     tint = Color(0xFF1B1B1B)
                 )
             }

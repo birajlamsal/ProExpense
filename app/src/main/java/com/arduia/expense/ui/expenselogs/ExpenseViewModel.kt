@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
@@ -90,6 +91,10 @@ class ExpenseViewModel @Inject constructor(
     private var currencySymbol = ""
 
     private var singleDeleteItemId: Int? = null
+
+    private val headerKeyFormatter = SimpleDateFormat("yyyyMMdd", Locale.ENGLISH)
+    private val headerLabelFormatter = SimpleDateFormat("dd MMM", Locale.ENGLISH)
+    private val headerLabelWithYearFormatter = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
 
     init {
         observeCurrencySymbol()
@@ -193,7 +198,7 @@ class ExpenseViewModel @Inject constructor(
             )
 
         return sourceFactory
-            .map(mapper::map)
+            .mapByPage(::mapPageWithHeaders)
             .toLiveData(
                 config = Config(
                     50,
@@ -202,6 +207,38 @@ class ExpenseViewModel @Inject constructor(
                     prefetchDistance = 10
                 )
             )
+    }
+
+    private fun mapPageWithHeaders(items: List<ExpenseEnt>): List<ExpenseLogUiModel> {
+        if (items.isEmpty()) return emptyList()
+        val mapped = ArrayList<ExpenseLogUiModel>(items.size * 2)
+        var lastHeaderKey: String? = null
+        for (item in items) {
+            val headerKey = formatHeaderKey(item.modifiedDate)
+            if (headerKey != lastHeaderKey) {
+                mapped.add(ExpenseLogUiModel.Header(formatHeaderLabel(item.modifiedDate)))
+                lastHeaderKey = headerKey
+            }
+            mapped.add(mapper.map(item))
+        }
+        return mapped
+    }
+
+    @Synchronized
+    private fun formatHeaderKey(time: Long): String {
+        return headerKeyFormatter.format(Date(time))
+    }
+
+    @Synchronized
+    private fun formatHeaderLabel(time: Long): String {
+        val now = Calendar.getInstance()
+        val target = Calendar.getInstance().apply { timeInMillis = time }
+        val formatter = if (target[Calendar.YEAR] == now[Calendar.YEAR]) {
+            headerLabelFormatter
+        } else {
+            headerLabelWithYearFormatter
+        }
+        return formatter.format(Date(time))
     }
 
     fun storeState(state: SwipeStateHolder) {
