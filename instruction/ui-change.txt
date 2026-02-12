@@ -1,0 +1,540 @@
+## Instructions 
+
+1. Use **Jetpack Compose** (recommended for this UI).
+2. Add Material3 Compose deps (you probably already have).
+3. Paste the code below into `ExpenseUI.kt`.
+4. In your project, **map your existing transaction fields** into `List<FieldSpec>` and pass into `AddTransactionScreen(...)`.
+5. Hook callbacks to your ViewModel / Supabase / Room later.
+
+---
+
+## Code (Compose UI that matches the design style)
+
+> You keep your fields — you only “wrap” them into FieldSpec for rendering.
+
+```kotlin
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+// ---------------------------
+// 1) MODELS (generic wrappers)
+// ---------------------------
+enum class FieldKind { Text, Number, Amount, Date, Dropdown }
+
+data class FieldSpec(
+    val id: String,           // keep your field key here
+    val label: String,        // display label
+    val value: String,        // current value as string
+    val kind: FieldKind,
+    val placeholder: String = "",
+    val options: List<String> = emptyList(), // for dropdown
+)
+
+data class TxRowUI(
+    val title: String,
+    val subtitle: String,
+    val amountText: String,
+    val dateText: String,
+    val isExpense: Boolean,
+)
+
+// ---------------------------
+// 2) THEME COLORS (soft)
+// ---------------------------
+private val Bg = Color(0xFFF6F7F9)
+private val Card = Color.White
+private val Border = Color(0xFFE9EDF2)
+private val TextDark = Color(0xFF1E293B)
+private val TextMid = Color(0xFF64748B)
+private val Green = Color(0xFFA8D5B2)
+private val GreenDark = Color(0xFF2E7D5B)
+
+// ---------------------------
+// 3) DASHBOARD SCREEN
+// ---------------------------
+@Composable
+fun DashboardScreen(
+    userName: String,
+    filters: List<String> = listOf("All", "Daily", "Weekly", "Monthly"),
+    selectedFilter: String = "All",
+    onFilterChange: (String) -> Unit = {},
+    incomeText: String,
+    spentText: String,
+    spentRatio: Float, // 0..1 for donut
+    recent: List<TxRowUI>,
+    onSeeAll: () -> Unit = {},
+    onAddClick: () -> Unit = {},
+) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Bg)
+    ) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp, bottom = 86.dp) // space for bottom nav
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Hello,", color = TextMid, fontSize = 16.sp)
+                    Text(userName, color = TextDark, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                }
+                // bell placeholder
+                SoftIconCircle(text = "🔔", onClick = {})
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                filters.forEach { f ->
+                    PillChip(
+                        text = f,
+                        selected = (f == selectedFilter),
+                        onClick = { onFilterChange(f) }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            SoftCard {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        StatLine(label = "Income", value = incomeText, dot = Color(0xFF8BC34A))
+                        Spacer(Modifier.height(8.dp))
+                        StatLine(label = "Spent", value = spentText, dot = Color(0xFFFF8A80))
+                    }
+                    DonutChart(
+                        modifier = Modifier.size(90.dp),
+                        progress = spentRatio.coerceIn(0f, 1f),
+                        trackColor = Color(0xFFEAF0EA),
+                        progressColor = Green
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Recent transactions", fontWeight = FontWeight.SemiBold, color = TextDark)
+                Spacer(Modifier.weight(1f))
+                Text(
+                    "See All",
+                    color = GreenDark,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .clickable { onSeeAll() }
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            SoftCard(padding = 0.dp) {
+                Column {
+                    recent.take(6).forEachIndexed { idx, tx ->
+                        TransactionRow(tx)
+                        if (idx != recent.take(6).lastIndex) {
+                            Divider(color = Border, thickness = 1.dp, modifier = Modifier.padding(horizontal = 14.dp))
+                        }
+                    }
+                }
+            }
+        }
+
+        BottomBarWithFab(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onAddClick = onAddClick
+        )
+    }
+}
+
+// ---------------------------
+// 4) ADD TRANSACTION SCREEN
+// ---------------------------
+@Composable
+fun AddTransactionScreen(
+    title: String = "Add transaction",
+    fields: List<FieldSpec>,               // <-- YOUR fields come here (no renaming)
+    onFieldChange: (id: String, newValue: String) -> Unit,
+    paymentTypes: List<String> = listOf("Cash", "Card", "Check"),
+    selectedPayment: String = "Cash",
+    onPaymentChange: (String) -> Unit = {},
+    onBack: () -> Unit = {},
+    onDraft: () -> Unit = {},
+    onAdd: () -> Unit = {},
+) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(Bg)
+            .padding(16.dp)
+    ) {
+        // top bar
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SoftIconCircle(text = "←", onClick = onBack)
+            Spacer(Modifier.width(10.dp))
+            Text(title, fontWeight = FontWeight.SemiBold, color = TextDark)
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        // dynamic form (your fields)
+        SoftCard {
+            DynamicFieldsForm(
+                fields = fields,
+                onChange = onFieldChange
+            )
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Text("Payment Type", color = TextDark, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(8.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            paymentTypes.forEach { t ->
+                PaymentRadioRow(
+                    text = t,
+                    selected = (t == selectedPayment),
+                    onClick = { onPaymentChange(t) }
+                )
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(
+                onClick = onDraft,
+                modifier = Modifier.weight(1f).height(52.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextDark)
+            ) { Text("Draft", fontWeight = FontWeight.SemiBold) }
+
+            Button(
+                onClick = onAdd,
+                modifier = Modifier.weight(1f).height(52.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Green)
+            ) { Text("Add", fontWeight = FontWeight.SemiBold, color = TextDark) }
+        }
+    }
+}
+
+// ---------------------------
+// 5) REUSABLE UI PIECES
+// ---------------------------
+@Composable
+private fun SoftCard(
+    padding: Dp = 14.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(Card)
+            .border(1.dp, Border, RoundedCornerShape(22.dp))
+            .padding(padding),
+        content = content
+    )
+}
+
+@Composable
+private fun PillChip(text: String, selected: Boolean, onClick: () -> Unit) {
+    val bg = if (selected) Color(0xFFEFF6F1) else Color.Transparent
+    val stroke = if (selected) Color(0xFFCFE7D6) else Border
+    val color = if (selected) TextDark else TextMid
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .border(1.dp, stroke, RoundedCornerShape(999.dp))
+            .background(bg)
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    ) {
+        Text(text, color = color, fontSize = 13.sp)
+    }
+}
+
+@Composable
+private fun StatLine(label: String, value: String, dot: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(dot)
+        )
+        Spacer(Modifier.width(8.dp))
+        Column {
+            Text(label, color = TextMid, fontSize = 12.sp)
+            Text(value, color = TextDark, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        }
+    }
+}
+
+@Composable
+private fun DonutChart(
+    modifier: Modifier,
+    progress: Float,
+    trackColor: Color,
+    progressColor: Color
+) {
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val stroke = 16f
+        // track
+        drawArc(
+            color = trackColor,
+            startAngle = 0f,
+            sweepAngle = 360f,
+            useCenter = false,
+            style = Stroke(width = stroke, cap = StrokeCap.Round),
+            size = Size(size.width, size.height)
+        )
+        // progress
+        drawArc(
+            color = progressColor,
+            startAngle = -90f,
+            sweepAngle = 360f * progress,
+            useCenter = false,
+            style = Stroke(width = stroke, cap = StrokeCap.Round),
+            size = Size(size.width, size.height)
+        )
+    }
+}
+
+@Composable
+private fun TransactionRow(tx: TxRowUI) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // icon placeholder
+        Box(
+            Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0xFFF3F4F6))
+                .border(1.dp, Border, RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center
+        ) { Text("🧾") }
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(Modifier.weight(1f)) {
+            Text(tx.title, color = TextDark, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(tx.subtitle, color = TextMid, fontSize = 12.sp)
+        }
+
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                tx.amountText,
+                color = if (tx.isExpense) Color(0xFFB42318) else Color(0xFF027A48),
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(tx.dateText, color = TextMid, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun PaymentRadioRow(text: String, selected: Boolean, onClick: () -> Unit) {
+    val stroke = if (selected) Color(0xFFCFE7D6) else Border
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, stroke, RoundedCornerShape(16.dp))
+            .background(Color.White)
+            .clickable { onClick() }
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Spacer(Modifier.width(8.dp))
+        Text(text, color = TextDark)
+    }
+}
+
+@Composable
+private fun SoftIconCircle(text: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(Color.White)
+            .border(1.dp, Border, CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) { Text(text) }
+}
+
+@Composable
+private fun DynamicFieldsForm(
+    fields: List<FieldSpec>,
+    onChange: (id: String, newValue: String) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        fields.forEach { f ->
+            when (f.kind) {
+                FieldKind.Dropdown -> SimpleDropdownField(f, onChange)
+                else -> SimpleTextField(f, onChange)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SimpleTextField(
+    f: FieldSpec,
+    onChange: (id: String, newValue: String) -> Unit
+) {
+    OutlinedTextField(
+        value = f.value,
+        onValueChange = { onChange(f.id, it) },
+        label = { Text(f.label) },
+        placeholder = { if (f.placeholder.isNotBlank()) Text(f.placeholder) },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = Color.White,
+            focusedContainerColor = Color.White,
+            unfocusedBorderColor = Border,
+            focusedBorderColor = Color(0xFFCFE7D6)
+        )
+    )
+}
+
+@Composable
+private fun SimpleDropdownField(
+    f: FieldSpec,
+    onChange: (id: String, newValue: String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        OutlinedTextField(
+            value = f.value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(f.label) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
+                unfocusedBorderColor = Border,
+                focusedBorderColor = Color(0xFFCFE7D6)
+            ),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            f.options.forEach { opt ->
+                DropdownMenuItem(
+                    text = { Text(opt) },
+                    onClick = {
+                        onChange(f.id, opt)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BottomBarWithFab(modifier: Modifier = Modifier, onAddClick: () -> Unit) {
+    Box(modifier.fillMaxWidth()) {
+        // Bottom bar
+        Row(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(70.dp)
+                .background(Color.White)
+                .border(1.dp, Border),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Text("Home", color = TextMid)
+            Text("Transfer", color = TextMid)
+            Spacer(Modifier.width(72.dp)) // space for FAB
+            Text("Wallet", color = TextMid)
+            Text("Profile", color = TextMid)
+        }
+
+        // Center FAB
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = (-22).dp)
+                .size(58.dp)
+                .clip(CircleShape)
+                .background(Green)
+                .border(1.dp, Color(0xFFCFE7D6), CircleShape)
+                .clickable { onAddClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("+", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = TextDark)
+        }
+    }
+}
+```
+
+---
+
+## How to “satisfy” your different fields (example mapping)
+
+You **do NOT rename your DB fields**. You just convert them into `FieldSpec` for the UI.
+
+```kotlin
+val fields = listOf(
+    FieldSpec(id = "your_existing_field_1", label = "Your Label 1", value = state.field1, kind = FieldKind.Text),
+    FieldSpec(id = "your_existing_field_2", label = "Your Label 2", value = state.field2, kind = FieldKind.Amount),
+    FieldSpec(id = "your_existing_field_3", label = "Your Label 3", value = state.field3, kind = FieldKind.Dropdown, options = listOf("A","B"))
+)
+
+AddTransactionScreen(
+    fields = fields,
+    onFieldChange = { id, newValue ->
+        // route back to your VM using the same id keys
+        viewModel.onFieldChanged(id, newValue)
+    }
+)
+```
+
+---
+
+If you paste your **exact field list** (just names + type), I’ll generate the **FieldSpec mapping** for your project in the same style (still not changing any field names).

@@ -75,7 +75,7 @@ class ExpenseLogAdapter constructor(private val layoutInflater: LayoutInflater) 
         val item = getItemFromPosition(position)
         when {
             (holder is LogVH) && (item is ExpenseLogUiModel.Log) -> {
-                bindLogVH(holder.binding, item)
+                bindLogVH(holder.binding, item, position)
             }
             (holder is HeaderVH) && (item is ExpenseLogUiModel.Header) -> {
                 bindHeaderVH(holder.binding, item)
@@ -83,8 +83,14 @@ class ExpenseLogAdapter constructor(private val layoutInflater: LayoutInflater) 
         }
     }
 
-    private fun bindLogVH(binding: ItemExpenseLogBinding, data: ExpenseLogUiModel.Log) {
-        binding.root.bindData(data, state = swipeState.getStateOrNull(data.expenseLog.id))
+    private fun bindLogVH(binding: ItemExpenseLogBinding, data: ExpenseLogUiModel.Log, position: Int) {
+        val prevItem = if (position > 0) getItem(position - 1) as? ExpenseLogUiModel.Log else null
+        val showHeader = prevItem?.headerKey != data.headerKey
+        binding.root.bindData(
+            data,
+            showHeader = showHeader,
+            state = swipeState.getStateOrNull(data.expenseLog.id)
+        )
     }
 
     private fun bindHeaderVH(binding: ItemExpenseDateHeaderBinding, data: ExpenseLogUiModel.Header) {
@@ -185,4 +191,3 @@ private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<ExpenseLogUiModel>() 
         }
     }
 }
-

@@ -6,7 +6,8 @@ sealed class ExpenseLogUiModel {
 
     class Log(
         val expenseLog: ExpenseUiModel,
-        val headerPosition: Int
+        val headerKey: String,
+        val headerLabel: String
     ) : ExpenseLogUiModel()
 
 }

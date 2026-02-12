@@ -60,6 +60,14 @@
         android:background="?colorSurface"
         android:translationX="0dp">
 
+        <include
+            android:id="@+id/include_date_header"
+            layout="@layout/item_expense_date_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:visibility="gone" />
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cv_category"
             style="@style/Widget.ProExpense.CircularCardView"
@@ -70,6 +78,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginTop="@dimen/grid_2"
             android:layout_marginBottom="@dimen/grid_2"
+            android:layout_below="@id/include_date_header"
             app:cardBackgroundColor="#b3e5fc"
             app:srcCompat="@drawable/ic_household">
 
@@ -145,7 +154,7 @@
             android:id="@+id/view_bg"
             android:layout_width="match_parent"
             android:layout_height="70dp"
-            android:layout_alignParentTop="true"
+            android:layout_below="@id/include_date_header"
             android:layout_centerHorizontal="true"
             android:background="?selectableItemBackground" />
     </RelativeLayout>

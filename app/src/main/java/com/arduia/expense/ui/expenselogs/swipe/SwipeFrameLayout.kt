@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.widget.FrameLayout
+import androidx.core.view.isVisible
 import androidx.interpolator.view.animation.LinearOutSlowInInterpolator
 import com.arduia.core.extension.px
 import com.arduia.expense.R
@@ -51,7 +52,11 @@ class SwipeFrameLayout @JvmOverloads constructor(
         return@OnLongClickListener true
     }
 
-    fun bindData(data: ExpenseLogUiModel.Log, state: Int? = SwipeItemState.STATE_IDLE) {
+    fun bindData(
+        data: ExpenseLogUiModel.Log,
+        showHeader: Boolean,
+        state: Int? = SwipeItemState.STATE_IDLE
+    ) {
 
         with(binding) {
             tvAmount.text = data.expenseLog.amount
@@ -59,6 +64,10 @@ class SwipeFrameLayout @JvmOverloads constructor(
             tvDate.text = data.expenseLog.date
             tvName.text = data.expenseLog.name
             imvCategory.setImageResource(data.expenseLog.category)
+            includeDateHeader.root.isVisible = showHeader
+            if (showHeader) {
+                includeDateHeader.tvDate.text = data.headerLabel
+            }
         }
 
         bindState(state)

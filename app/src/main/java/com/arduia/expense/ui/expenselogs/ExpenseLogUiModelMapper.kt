@@ -10,6 +10,10 @@ import com.arduia.expense.ui.common.formatter.DateFormatter
 import com.arduia.expense.ui.home.CurrencyProvider
 import java.math.BigDecimal
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 class ExpenseLogUiModelMapper  @Inject constructor(
@@ -18,6 +22,10 @@ class ExpenseLogUiModelMapper  @Inject constructor(
     @CurrencyDecimalFormat private val currencyFormatter: NumberFormat,
     private val provider: CurrencyProvider = CurrencyProvider{""}
 ) : Mapper<ExpenseEnt, ExpenseLogUiModel.Log> {
+
+    private val headerKeyFormatter = SimpleDateFormat("yyyyMMdd", Locale.ENGLISH)
+    private val headerLabelFormatter = SimpleDateFormat("dd MMM", Locale.ENGLISH)
+    private val headerLabelWithYearFormatter = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
 
     override fun map(input: ExpenseEnt): ExpenseLogUiModel.Log {
         val categoryDrawable = try {
@@ -39,8 +47,27 @@ class ExpenseLogUiModelMapper  @Inject constructor(
                 finance = "",
                 category = categoryDrawable,
                 currencySymbol = provider.get()
-            ), 0
+            ),
+            headerKey = formatHeaderKey(input.modifiedDate),
+            headerLabel = formatHeaderLabel(input.modifiedDate)
         )
+    }
+
+    @Synchronized
+    private fun formatHeaderKey(time: Long): String {
+        return headerKeyFormatter.format(Date(time))
+    }
+
+    @Synchronized
+    private fun formatHeaderLabel(time: Long): String {
+        val now = Calendar.getInstance()
+        val target = Calendar.getInstance().apply { timeInMillis = time }
+        val formatter = if (target[Calendar.YEAR] == now[Calendar.YEAR]) {
+            headerLabelFormatter
+        } else {
+            headerLabelWithYearFormatter
+        }
+        return formatter.format(Date(time))
     }
 
 }
