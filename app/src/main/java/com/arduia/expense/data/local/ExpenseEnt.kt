@@ -10,6 +10,9 @@ data class ExpenseEnt(
     @ColumnInfo(name = "expense_id")
     val expenseId: Int = 0,
 
+    @ColumnInfo(name = "remote_id")
+    val remoteId: String? = null,
+
     @ColumnInfo(name = "name")
     val name: String?,
 
@@ -27,9 +30,18 @@ data class ExpenseEnt(
     val createdDate: Long,
 
     @ColumnInfo(name = "modified_date")
-    val modifiedDate: Long
+    val modifiedDate: Long,
+
+    @ColumnInfo(name = "deleted_at")
+    val deletedAt: Long? = null,
+
+    @ColumnInfo(name = "sync_state")
+    val syncState: Int = SYNCED
 ){
     companion object{
         const val TABLE_NAME = "expense"
+        const val SYNCED = 0
+        const val DIRTY = 1
+        const val DELETED = 2
     }
 }

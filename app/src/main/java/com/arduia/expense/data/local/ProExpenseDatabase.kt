@@ -11,7 +11,7 @@ import java.lang.Exception
 
 @Database(
     entities = [ExpenseEnt::class, BackupEnt::class],
-    version = 6, exportSchema = true
+    version = 7, exportSchema = true
 )
 @TypeConverters(AmountTypeConverter::class)
 abstract class ProExpenseDatabase : RoomDatabase() {
@@ -47,6 +47,14 @@ abstract class ProExpenseDatabase : RoomDatabase() {
                 )
                 database.execSQL("UPDATE `expense` SET `amount`=`amount`*100;") // Decimal Amount Support. Store Expense with 100 multiplication
                 database.execSQL("DROP TABLE tmp;")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE expense ADD COLUMN remote_id TEXT")
+                database.execSQL("ALTER TABLE expense ADD COLUMN deleted_at INTEGER")
+                database.execSQL("ALTER TABLE expense ADD COLUMN sync_state INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

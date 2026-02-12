@@ -25,13 +25,25 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     override suspend fun insertExpense(expenseEnt: ExpenseEnt) {
         withContext(Dispatchers.IO) {
-            expenseDao.insertExpense(expenseEnt)
+            expenseDao.insertExpense(
+                expenseEnt.copy(
+                    syncState = ExpenseEnt.DIRTY,
+                    deletedAt = null
+                )
+            )
         }
     }
 
     override suspend fun insertExpenseAll(expenses: List<ExpenseEnt>) {
         withContext(Dispatchers.IO) {
-            expenseDao.insertExpenseAll(expenses)
+            expenseDao.insertExpenseAll(
+                expenses.map {
+                    it.copy(
+                        syncState = ExpenseEnt.DIRTY,
+                        deletedAt = null
+                    )
+                }
+            )
         }
     }
 
@@ -157,25 +169,32 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     override suspend fun updateExpense(expenseEnt: ExpenseEnt) {
         withContext(Dispatchers.IO) {
-            expenseDao.updateExpense(expenseEnt)
+            expenseDao.updateExpense(
+                expenseEnt.copy(
+                    syncState = ExpenseEnt.DIRTY
+                )
+            )
         }
     }
 
     override suspend fun deleteExpense(expenseEnt: ExpenseEnt) {
         withContext(Dispatchers.IO) {
-            expenseDao.deleteExpense(expenseEnt)
+            val now = System.currentTimeMillis()
+            expenseDao.markDeletedById(expenseEnt.expenseId, now, ExpenseEnt.DELETED)
         }
     }
 
     override suspend fun deleteExpenseById(id: Int) {
         withContext(Dispatchers.IO) {
-            expenseDao.deleteExpenseRowById(id)
+            val now = System.currentTimeMillis()
+            expenseDao.markDeletedById(id, now, ExpenseEnt.DELETED)
         }
     }
 
     override suspend fun deleteAllExpense(list: List<Int>) {
         withContext(Dispatchers.IO) {
-            expenseDao.deleteExpenseByIDs(list)
+            val now = System.currentTimeMillis()
+            expenseDao.markDeletedByIDs(list, now, ExpenseEnt.DELETED)
         }
     }
 

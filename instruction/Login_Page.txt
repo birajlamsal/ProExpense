@@ -1,0 +1,188 @@
+Yep — easiest way to build this kind of UI in a Kotlin Android project is **Jetpack Compose** (clean + fast for modern UI).
+
+## 1) Enable Compose
+
+In `app/build.gradle`:
+
+```gradle
+android {
+  buildFeatures { compose true }
+  composeOptions { kotlinCompilerExtensionVersion = "1.5.14" } // use your version
+}
+dependencies {
+  implementation "androidx.activity:activity-compose:1.9.0"
+  implementation "androidx.compose.ui:ui:1.6.8"
+  implementation "androidx.compose.material3:material3:1.2.1"
+  implementation "androidx.compose.ui:ui-tooling-preview:1.6.8"
+}
+```
+
+## 2) Use this UI (single file)
+
+Create `LoginScreen.kt`:
+
+```kotlin
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+@Composable
+fun LoginScreen() {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var showPass by remember { mutableStateOf(false) }
+
+    val bg = Brush.verticalGradient(
+        listOf(
+            Color(0xFFF5F5F7),
+            Color(0xFFE6F2ED),
+            Color(0xFFD7EDE6)
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .padding(20.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // Glass-ish card
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(28.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(28.dp))
+                .background(Color.White.copy(alpha = 0.25f))
+                .padding(22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Hello Again!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1B1B1B))
+            Spacer(Modifier.height(6.dp))
+            Text("Welcome back, You’ve\nbeen missed!", color = Color(0xFF555555))
+
+            Spacer(Modifier.height(18.dp))
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                placeholder = { Text("Enter Username") },
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent
+                )
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                placeholder = { Text("Password") },
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    TextButton(onClick = { showPass = !showPass }) {
+                        Text(if (showPass) "Hide" else "Show", color = Color(0xFF2F7D62))
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent
+                )
+            )
+
+            Spacer(Modifier.height(6.dp))
+            TextButton(
+                onClick = { /* forgot pass */ },
+                modifier = Modifier.align(Alignment.End),
+                contentPadding = PaddingValues(0.dp)
+            ) { Text("Forgot Password?", color = Color(0xFF4A4A4A)) }
+
+            Spacer(Modifier.height(14.dp))
+
+            Button(
+                onClick = { /* sign in */ },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0A8F6A))
+            ) { Text("Sign In", fontWeight = FontWeight.Bold) }
+
+            Spacer(Modifier.height(18.dp))
+            Text("or continue with", color = Color(0xFF666666))
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                SocialChip("G") { /* Google */ }
+                SocialChip("") { /* Apple */ }
+                SocialChip("f") { /* Facebook */ }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Don’t have an account? ", color = Color(0xFF444444))
+                TextButton(onClick = { /* register */ }, contentPadding = PaddingValues(0.dp)) {
+                    Text("Register Now", color = Color(0xFF2F7D62), fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SocialChip(label: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = Color.White.copy(alpha = 0.6f),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = Modifier.size(width = 70.dp, height = 52.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(label, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF222222))
+        }
+    }
+}
+```
+
+## 3) Call it from `MainActivity`
+
+```kotlin
+setContent {
+    MaterialTheme {
+        LoginScreen()
+    }
+}
+```
+
+### Quick tips to make it match the image more
+
+* Use **rounded corners** (28dp card, 14–16dp inputs/buttons).
+* Keep **soft background gradient** + **semi-transparent card** for the “glass” look.
+* Replace `"G"`, `""`, `"f"` with real icons later (Image + painterResource).
+
+If you tell me whether you’re using **Compose or XML**, I can also give an **XML version** (ConstraintLayout) in the same style.

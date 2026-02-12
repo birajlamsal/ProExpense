@@ -122,6 +122,7 @@ class HomeViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+
     private fun updateWeekDateRange() {
         _currentWeekDateRange set getWeekDateRange()
     }

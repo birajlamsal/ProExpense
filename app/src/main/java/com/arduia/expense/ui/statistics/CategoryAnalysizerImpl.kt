@@ -3,6 +3,7 @@ package com.arduia.expense.ui.statistics
 import com.arduia.expense.data.local.ExpenseEnt
 import com.arduia.expense.ui.common.category.ExpenseCategoryProvider
 import com.arduia.expense.ui.common.category.ExpenseCategoryProviderImpl
+import com.arduia.expense.ui.common.category.ExpenseCategory
 import java.lang.Exception
 import java.text.DecimalFormat
 import java.util.*
@@ -36,7 +37,11 @@ class CategoryAnalyzerImpl @Inject constructor(private val categoryProvider: Exp
         val total: Double = valueHolder.values.sum()
 
         return valueHolder.map {
-            val category = categoryProvider.getCategoryByID(it.key)
+            val category = try {
+                categoryProvider.getCategoryByID(it.key)
+            } catch (e: Exception) {
+                categoryProvider.getCategoryByID(ExpenseCategory.OTHERS)
+            }
             val percentage = calculatePercentage(it.value, total)
             return@map CategoryStatisticUiModel(
                 category.nameId,

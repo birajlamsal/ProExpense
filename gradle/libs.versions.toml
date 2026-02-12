@@ -63,6 +63,10 @@ firebasePlugin = "4.4.3"
 firebase-bom = "31.3.0"
 firebaseFireStore = "24.11.0"
 firebaseCrashlytics = "3.0.2"
+supabase = "3.3.0"
+ktor = "3.3.3"
+serialization-json = "1.9.0"
+multiplatform-settings = "1.3.0"
 
 [libraries]
 # Android
@@ -194,6 +198,18 @@ leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-and
 progressview = { group = "com.github.skydoves", name = "progressview", version.ref = "progressview" }
 flow-preferences = { group = "com.github.tfcporciuncula.flow-preferences", name = "flow-preferences", version.ref = "flow-preferences" }
 mvvm-core = { group = "com.github.arduia", name = "mvvm-core", version.ref = "mvvm-core" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization-json" }
+multiplatform-settings = { group = "com.russhwolf", name = "multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
+
+# Supabase
+supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
+supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt" }
+supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }
+
+# Ktor (client)
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-utils = { group = "io.ktor", name = "ktor-utils", version.ref = "ktor" }
 
 [plugins]
 android-application = { id = "com.android.application", version = "8.12.0" }
@@ -206,3 +222,4 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 navigation-safe-args = { id = "androidx.navigation.safeargs.kotlin", version = "2.5.3" }
 google-service-plugin = { id = "com.google.gms.google-services", version.ref = "firebasePlugin" }
 firebase-analytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

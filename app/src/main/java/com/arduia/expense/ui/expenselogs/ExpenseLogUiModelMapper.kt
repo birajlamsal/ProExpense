@@ -3,6 +3,7 @@ package com.arduia.expense.ui.expenselogs
 import com.arduia.core.arch.Mapper
 import com.arduia.expense.data.local.ExpenseEnt
 import com.arduia.expense.di.CurrencyDecimalFormat
+import com.arduia.expense.ui.common.category.ExpenseCategory
 import com.arduia.expense.ui.common.category.ExpenseCategoryProvider
 import com.arduia.expense.ui.common.category.ExpenseCategoryProviderImpl
 import com.arduia.expense.ui.common.formatter.DateFormatter
@@ -19,6 +20,11 @@ class ExpenseLogUiModelMapper  @Inject constructor(
 ) : Mapper<ExpenseEnt, ExpenseLogUiModel.Log> {
 
     override fun map(input: ExpenseEnt): ExpenseLogUiModel.Log {
+        val categoryDrawable = try {
+            categoryProvider.getCategoryDrawableByID(input.category)
+        } catch (e: Exception) {
+            categoryProvider.getCategoryDrawableByID(ExpenseCategory.OTHERS)
+        }
 
         return ExpenseLogUiModel.Log(
             ExpenseUiModel(
@@ -31,7 +37,7 @@ class ExpenseLogUiModelMapper  @Inject constructor(
                     )
                 ),
                 finance = "",
-                category = categoryProvider.getCategoryDrawableByID(input.category),
+                category = categoryDrawable,
                 currencySymbol = provider.get()
             ), 0
         )

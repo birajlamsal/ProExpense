@@ -64,7 +64,11 @@ class ExpenseCategoryProviderImpl @Inject constructor(@ApplicationContext privat
     }
 
     override fun getCategoryByID(id: Int): ExpenseCategory {
-        return categoryList.firstOrNull { it.id == id } ?: throw Exception("Category Not Found $id")
+        val fallback = ExpenseCategory(ExpenseCategory.OTHERS, R.string.others, R.drawable.ic_outcome)
+        if (categoryList.isEmpty()) return fallback
+        return categoryList.firstOrNull { it.id == id }
+            ?: categoryList.firstOrNull { it.id == ExpenseCategory.OTHERS }
+            ?: fallback
     }
 
     override fun getIndexByCategory(category: ExpenseCategory): Int {

@@ -90,6 +90,42 @@ class PreferenceFlowStorageDaoImpl @Inject constructor(@ApplicationContext priva
         }
     }
 
+    override fun getUserName(): Flow<String> {
+        return flowPref.getString(KEY_USER_NAME, DEFAULT_USER_NAME).asFlow()
+    }
+
+    override suspend fun getUserNameSync(): String {
+        return preferences.getString(KEY_USER_NAME, DEFAULT_USER_NAME) ?: DEFAULT_USER_NAME
+    }
+
+    override suspend fun setUserName(name: String) {
+        preferences.edit().putString(KEY_USER_NAME, name).apply()
+    }
+
+    override suspend fun getLastSyncAt(): Long {
+        return preferences.getLong(KEY_LAST_SYNC_AT, 0L)
+    }
+
+    override suspend fun setLastSyncAt(timeMillis: Long) {
+        preferences.edit().putLong(KEY_LAST_SYNC_AT, timeMillis).apply()
+    }
+
+    override suspend fun getLastAuthAt(): Long {
+        return preferences.getLong(KEY_LAST_AUTH_AT, 0L)
+    }
+
+    override suspend fun setLastAuthAt(timeMillis: Long) {
+        preferences.edit().putLong(KEY_LAST_AUTH_AT, timeMillis).apply()
+    }
+
+    override suspend fun getLastUserId(): String {
+        return preferences.getString(KEY_LAST_USER_ID, "") ?: ""
+    }
+
+    override suspend fun setLastUserId(userId: String) {
+        preferences.edit().putString(KEY_LAST_USER_ID, userId).apply()
+    }
+
     companion object {
 
         private const val KEY_SELECTED_LANGUAGE = "selected_language"
@@ -114,6 +150,13 @@ class PreferenceFlowStorageDaoImpl @Inject constructor(@ApplicationContext priva
         private const val DEFAULT_ABOUT_UPDATE_NAME = ""
         private const val DEFAULT_ABOUT_UPDATE_CODE = 0L
         private const val DEFAULT_ABOUT_UPDATE_LOG = ""
+
+        private const val KEY_USER_NAME = "user_name"
+        private const val DEFAULT_USER_NAME = ""
+
+        private const val KEY_LAST_SYNC_AT = "last_sync_at"
+        private const val KEY_LAST_AUTH_AT = "last_auth_at"
+        private const val KEY_LAST_USER_ID = "last_user_id"
 
     }
 }

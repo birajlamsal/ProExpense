@@ -84,6 +84,43 @@ class SettingsRepositoryImpl @Inject constructor(private val dao: PreferenceStor
     override suspend fun setAboutUpdate(info: AboutUpdateDataModel) {
         dao.setAboutUpdate(info)
     }
+
+    override fun getUserName(): FlowResult<String> =
+        dao.getUserName()
+            .map { SuccessResult(it) }
+            .catch { ErrorResult(RepositoryException(it)) }
+
+    override suspend fun getUserNameSync(): Result<String> {
+        return getResultSuccessOrError { dao.getUserNameSync() }
+    }
+
+    override suspend fun setUserName(name: String) {
+        dao.setUserName(name)
+    }
+
+    override suspend fun getLastSyncAt(): Result<Long> {
+        return getResultSuccessOrError { dao.getLastSyncAt() }
+    }
+
+    override suspend fun setLastSyncAt(timeMillis: Long) {
+        dao.setLastSyncAt(timeMillis)
+    }
+
+    override suspend fun getLastAuthAt(): Result<Long> {
+        return getResultSuccessOrError { dao.getLastAuthAt() }
+    }
+
+    override suspend fun setLastAuthAt(timeMillis: Long) {
+        dao.setLastAuthAt(timeMillis)
+    }
+
+    override suspend fun getLastUserId(): Result<String> {
+        return getResultSuccessOrError { dao.getLastUserId() }
+    }
+
+    override suspend fun setLastUserId(userId: String) {
+        dao.setLastUserId(userId)
+    }
 }
 
 object SettingRepositoryFactoryImpl  : SettingsRepository.Factory {

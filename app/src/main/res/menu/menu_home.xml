@@ -28,9 +28,17 @@
             android:icon="@drawable/ic_info"
             android:title="@string/about" />
         <item
+            android:id="@+id/dest_check"
+            android:icon="@drawable/ic_info"
+            android:title="Check" />
+        <item
             android:id="@+id/dest_settings"
             android:icon="@drawable/ic_settings"
             android:title="@string/settings" />
+        <item
+            android:id="@+id/dest_login"
+            android:icon="@drawable/ic_lock_open"
+            android:title="Login" />
 
     </group>
 </menu>

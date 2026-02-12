@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -13,14 +14,27 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.*
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.arduia.core.lang.updateResource
 import com.arduia.expense.R
 import com.arduia.expense.data.SettingRepositoryFactoryImpl
+import com.arduia.expense.data.SettingsRepository
+import com.arduia.expense.data.sync.ExpenseSyncWorker
 import com.arduia.expense.databinding.ActivityMainBinding
 import com.arduia.expense.databinding.LayoutHeaderBinding
 import com.arduia.expense.di.IntegerDecimal
 import com.arduia.expense.di.TopDropNavOption
+import com.arduia.expense.data.remote.supabase.SupabaseAuthRepository
+import com.arduia.expense.data.remote.supabase.SupabaseStatusRepository
+import com.arduia.expense.data.local.LocalDataRepository
+import com.arduia.expense.data.local.ExpenseDao
 import com.arduia.expense.model.getDataOrError
+import com.arduia.expense.model.Result
+import com.arduia.expense.ui.login.LoginActivity
 import com.arduia.expense.ui.backup.BackupMessageViewModel
 import com.arduia.mvvm.EventObserver
 import com.google.android.material.snackbar.Snackbar
@@ -71,6 +85,21 @@ class MainActivity @Inject constructor() : AppCompatActivity(), NavigationDrawer
     @TopDropNavOption
     lateinit var entryNavOption: NavOptions
 
+    @Inject
+    lateinit var supabaseAuthRepository: SupabaseAuthRepository
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    @Inject
+    lateinit var localDataRepository: LocalDataRepository
+
+    @Inject
+    lateinit var expenseDao: ExpenseDao
+
+    @Inject
+    lateinit var supabaseStatusRepository: SupabaseStatusRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycle.addObserver(viewModel)
@@ -83,6 +112,8 @@ class MainActivity @Inject constructor() : AppCompatActivity(), NavigationDrawer
         navOption = createNavOption()
         setupView()
         setupViewModel()
+        updateLoginMenuItem()
+        normalizeLocalCategories()
     }
 
 
@@ -189,6 +220,51 @@ class MainActivity @Inject constructor() : AppCompatActivity(), NavigationDrawer
     }
 
     private fun selectPage(selectedMenuItem: MenuItem) {
+        if (selectedMenuItem.itemId == R.id.dest_check) {
+            lifecycleScope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    supabaseStatusRepository.checkConnection()
+                }
+                val message = when (result) {
+                    is Result.Success -> result.data
+                    is Result.Error -> "Not connected"
+                    Result.Loading -> "Checking..."
+                }
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+            }
+            closeDrawer()
+            return
+        }
+        if (selectedMenuItem.itemId == R.id.dest_login) {
+            if (supabaseAuthRepository.currentUserId() != null) {
+                lifecycleScope.launch {
+                    when (supabaseAuthRepository.signOut()) {
+                        is Result.Success -> {
+                            Toast.makeText(this@MainActivity, "Signed out", Toast.LENGTH_SHORT)
+                                .show()
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                localDataRepository.clearAll()
+                                settingsRepository.setLastSyncAt(0L)
+                                settingsRepository.setLastUserId("")
+                                settingsRepository.setUserName("")
+                            }
+                            updateLoginMenuItem()
+                            cancelSyncWork()
+                        }
+                        is Result.Error -> {
+                            Toast.makeText(this@MainActivity, "Sign out failed", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                        Result.Loading -> Unit
+                    }
+                }
+            } else {
+                startActivity(Intent(this, LoginActivity::class.java))
+            }
+            closeDrawer()
+            return
+        }
+
         val isHome = (selectedMenuItem.itemId == R.id.dest_home)
 
         if (isHome) {
@@ -294,6 +370,67 @@ class MainActivity @Inject constructor() : AppCompatActivity(), NavigationDrawer
         NavOptions.Builder()
             .setLaunchSingleTop(true)
             .build()
+
+    private fun updateLoginMenuItem() {
+        val item = binding.nvMain.menu.findItem(R.id.dest_login)
+        item?.title = if (supabaseAuthRepository.currentUserId() != null) {
+            "Sign out"
+        } else {
+            "Login"
+        }
+    }
+
+    private fun scheduleSyncIfLoggedIn() {
+        if (supabaseAuthRepository.currentUserId() == null) return
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val request = PeriodicWorkRequestBuilder<ExpenseSyncWorker>(
+            6,
+            java.util.concurrent.TimeUnit.HOURS
+        )
+            .setConstraints(constraints)
+            .build()
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            "expense-sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    private fun cancelSyncWork() {
+        WorkManager.getInstance(applicationContext).cancelUniqueWork("expense-sync")
+    }
+
+    private fun normalizeLocalCategories() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            // Fix any invalid categories from external data imports/syncs.
+            expenseDao.normalizeCategories()
+        }
+    }
+
+    private fun enforceMonthlyReauth() {
+        if (supabaseAuthRepository.currentUserId() == null) return
+        lifecycleScope.launch(Dispatchers.IO) {
+            val lastAuth = settingsRepository.getLastAuthAt().getDataOrError()
+            val now = System.currentTimeMillis()
+            val daysSince = (now - lastAuth) / (1000L * 60 * 60 * 24)
+            if (lastAuth == 0L || daysSince >= 30) {
+                supabaseAuthRepository.signOut()
+                withContext(Dispatchers.Main) {
+                    updateLoginMenuItem()
+                    startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateLoginMenuItem()
+        scheduleSyncIfLoggedIn()
+        enforceMonthlyReauth()
+    }
 
     override fun onDestroy() {
         super.onDestroy()

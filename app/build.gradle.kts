@@ -5,18 +5,29 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.navigation.safe.args)
-    alias(libs.plugins.google.service.plugin)
-    alias(libs.plugins.firebase.analytics)
+    alias(libs.plugins.google.service.plugin) apply false
+    alias(libs.plugins.firebase.analytics) apply false
 }
 
 val apiProfile = rootProject.file("api.properties")
 val apiProperties = Properties().apply {
     load(FileInputStream(apiProfile))
 }
+
+val localPropertiesFile = rootProject.file("local.properties")
+val localProperties = Properties().apply {
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
+}
+
+fun localProp(name: String): String = localProperties.getProperty(name) ?: ""
+fun quote(value: String): String = "\"$value\""
 
 android {
     namespace = "com.arduia.expense"
@@ -36,6 +47,9 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 14
         versionName = "1.0.0-beta08"
+
+        buildConfigField("String", "SUPABASE_URL", quote(localProp("supabase.url")))
+        buildConfigField("String", "SUPABASE_ANON_KEY", quote(localProp("supabase.anonKey")))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
@@ -115,6 +129,17 @@ android {
     kapt {
         correctErrorTypes = true
     }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+// Enable Firebase/Google Services only when explicitly requested.
+// Usage: ./gradlew :app:assembleProductionRelease -PwithGoogleServices=true
+if (project.findProperty("withGoogleServices") == "true") {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 dependencies {
@@ -249,6 +274,16 @@ dependencies {
     implementation(libs.flow.preferences)
     debugImplementation(libs.leakcanary.android)
     implementation(libs.progressview)
+
+    // Supabase
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.utils)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.multiplatform.settings)
 
     // Hilt WorkManager
     implementation(libs.hilt.work)

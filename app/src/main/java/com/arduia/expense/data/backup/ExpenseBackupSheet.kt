@@ -38,11 +38,11 @@ class ExpenseBackupSheet @Inject constructor(source: BackupSource<ExpenseEnt>) :
         val date = row[FIELD_DATE]?.toLong() ?: 0
 
         return ExpenseEnt(
-            0,
-            name,
-            Amount.createFromActual(amount),
-            category,
-            note,
+            expenseId = 0,
+            name = name,
+            amount = Amount.createFromActual(amount),
+            category = category,
+            note = note,
             createdDate = Date().time,
             modifiedDate = date
         )

@@ -27,4 +27,7 @@ interface BackupDao {
     @Query("SELECT * FROM backup ORDER BY created_date DESC")
     fun getBackupAll(): Flow<List<BackupEnt>>
 
+    @Query("DELETE FROM backup")
+    fun clearAll()
+
 }
